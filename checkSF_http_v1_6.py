@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # author: 	Joe McManus joe.mcmanus@solidfire.com
 # Updated: 	Scott Chubb scott.chubb@netapp.com
+# Written for Python 3.4 and above
+# No warranty is offered, use at your own risk.  While these scripts have been tested in lab situations, all use cases cannot be accounted for.
 # 	Updated to run using requests instead of urllib and corrected authentication stream
 #	Added section for disabling SSL cert check due to lab on demand API calls failing		
 # version: 	1.6 4-Dec-2017
-# This script is tested on python 3.4, ipaddress will need to be installed via pip on 2.7 and below
+# ipaddress will need to be installed via pip on 2.7 and below
 # use: Query clusters and nodes for nagios info, or just command line 
 # coding: utf-8
 # usage: python <script> (IP|HOSTNAME) PORT USERNAME PASSWORD (mvip|node)")

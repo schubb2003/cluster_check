@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # author:     Joe McManus joe.mcmanus@solidfire.com
 # Updated:     Scott Chubb scott.chubb@netapp.com
+# Written for Python 3.4 and above
+# No warranty is offered, use at your own risk.  While these scripts have been tested in lab situations, all use cases cannot be accounted for.
 # version:     1.6 4-Dec-2017
-# This script is tested on python 3.4
 # use: Query clusters and nodes for nagios info, or just command line 
 # coding: utf-8
 # usage: python <script> (IP|HOSTNAME) PORT USERNAME PASSWORD")
