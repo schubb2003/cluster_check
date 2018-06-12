@@ -40,15 +40,15 @@ checkDiskUse=0     #Generate Alerts on disk access
 
 # Set vars for connectivity using argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-m', type=str,
+parser.add_argument('-sm', type=str,
                     required=True,
                     metavar='mvip',
                     help='MVIP/node name or IP')
-parser.add_argument('-u', type=str,
+parser.add_argument('-su', type=str,
                     required=True,
                     metavar='username',
                     help='username to connect with')
-parser.add_argument('-p', type=str,
+parser.add_argument('-sp', type=str,
                     required=True,
                     metavar='password',
                     help='password for user')
