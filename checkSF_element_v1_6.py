@@ -54,9 +54,9 @@ parser.add_argument('-sp', type=str,
                     help='password for user')
 args = parser.parse_args()
 
-mvip_ip = args.m
-user_name = args.u
-user_pass = args.p
+mvip_ip = args.sm
+user_name = args.su
+user_pass = args.sp
 num_sessions = 0
 ensemble_count = 0
 
