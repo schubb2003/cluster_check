@@ -59,6 +59,8 @@ user_name = args.su
 user_pass = args.sp
 num_sessions = 0
 ensemble_count = 0
+num_vols = 0
+num_nodes = 0
 
 #Check for a valid IP
 def ip_check(ip):
@@ -164,10 +166,27 @@ else:
 cluster_version_info = sfe.get_cluster_version_info()
 element_api_ver = cluster_version_info.cluster_apiversion
 element_os_ver = cluster_version_info.cluster_version
+drive_list = sfe.list_drives()
 
 cluster_state = sfe.get_cluster_state(force=True)
 for node in cluster_state.nodes:
+    num_nodes += 1
     if node.node_id != 0:
+        num_data_drives = 0
+        num_meta_drives = 0
+        error_data_drives = 0
+        error_meta_drives = 0
+        for drive in drive_list.drives:
+            if drive.node_id == node.node_id and drive.type == "block" and drive.status == "active":
+                num_data_drives +=1
+            elif drive.node_id == node.node_id and drive.type == "volume" and drive.status == "active":
+                num_meta_drives += 1
+            elif drive.node_id == node.node_id and drive.type == "block" and drive.status != "active":
+                error_data_drives += 1
+            elif drive.node_id == node.node_id and drive.type == "volume" and drive.status != "active":
+                error_meta_drives +=1
+            else:
+                continue                
         try:
             cluster_state = node.result.state
             cluster_name = node.result.cluster
@@ -179,6 +198,12 @@ for node in cluster_state.nodes:
                 pretty_print("Node Status", cluster_state, 80)
                 pretty_print("Cluster Name", cluster_name, 80)
                 pretty_print("Node ID", str(node.node_id), 80)
+                pretty_print("Active data drives", str(num_data_drives), 80)
+                pretty_print("Active metadata drives", str(num_meta_drives), 80)
+                if error_data_drives > 0:
+                    pretty_print("DATA DRIVES IN ERROR", str(error_data_drives)+" <<-- DRIVE IN ERROR", 80)
+                if error_meta_drives > 0:
+                    pretty_print("METADATA DRIVES IN ERROR", str(error_meta_drives)+" <<-- DRIVE IN ERROR", 80)
                 pretty_print("MVIP", mvip_ip , 80)
                 pretty_print("Execution Time ", time.asctime(time.localtime(time.time())) , 80)
                 print("+" + "-"*83 + "+")
@@ -195,6 +220,12 @@ for node in cluster_state.nodes:
             pretty_print("Node Status", error_msg, 80)
             pretty_print("Cluster Name", error_na, 80)
             pretty_print("Node ID", str(node.node_id), 80)
+            pretty_print("Active data drives", str(num_data_drives), 80)
+            pretty_print("Active metadata drives", str(num_meta_drives), 80)
+            if error_data_drives > 0:
+                pretty_print("DATA DRIVES IN ERROR", str(error_data_drives)+" <<-- DRIVE IN ERROR", 80)
+            if error_meta_drives > 0:
+                pretty_print("METADATA DRIVES IN ERROR", str(error_meta_drives)+" <<-- DRIVE IN ERROR", 80)
             pretty_print("MVIP", error_na, 80)
             pretty_print("Execution Time ", time.asctime(time.localtime(time.time())) , 80)
             print("+" + "-"*83 + "+")      
@@ -220,6 +251,10 @@ pct_read_ops =  round((read_ops/total_ops)*100,2)
 pct_write_ops =  round((write_ops/total_ops)*100,2)
 cluster_latent = cluster_stats.cluster_stats.latency_usec
 
+vol_list = sfe.list_volumes()
+for vol in vol_list.volumes:
+	num_vols += 1 
+
 if checkDiskUse == 1:
     fileName="/tmp/cluster-" + mvip_ip + ".txt"
     new_use=cluster_read_bytes + cluster_write_bytes
@@ -240,7 +275,8 @@ if checkSessions == 1:
     test_result=range_check(maxSessions, warnSessions, num_sessions)
     exit_status, num_sessions=add_note(test_result, exit_status, str(num_sessions))    
 ensemble_string = ('%s' % ' '.join(map(str, ensemble_member)))
-ensemble_string = ensemble_string.strip()    
+ensemble_string = ensemble_string.strip()
+ 
 #check to see if we are being called from a terminal
 if sys.stdout.isatty():
     print("+" + "-"*83 + "+")
@@ -249,6 +285,8 @@ if sys.stdout.isatty():
     pretty_print("Cluster", mvip_ip , 80)
     pretty_print("Version", element_os_ver, 80)
     pretty_print("iSCSI Sessions", str(num_sessions) , 80)
+    pretty_print("Node count", str(num_nodes) , 80)
+    pretty_print("Volume Count", str(num_vols) , 80)
     pretty_print("Cluster Name", cluster_name , 80)
     #pretty_print("Ensemble Members", str('[%s]' % ', '.join(map(str, ensemble))) , 80)
     pretty_print("Ensemble Members", ensemble_string , 80)
@@ -267,10 +305,29 @@ if sys.stdout.isatty():
     print("+" + "-"*83 + "+")
     
 else:
-    print("Cluster IP: " + mvip_ip + " Version: " + cluster_version + " Disk Activity: " + disk_use + 
-        " Read Bytes: " + cluster_read_bytes + " Write Bytes: " + cluster_write_bytes + 
-        " Utilization: " + cluster_util + " ISCSI Sessions: " + str(num_sessions) + 
-        " Name: " + cluster_name + " Ensemble: "  + '[%s]' % ', '.join(map(str, ensemble_string)) )
+    # Untested as all my terminals are TTY
+    print("Cluster IPs: {} + \
+		  Version: {} + \
+		  Disk Activity: {} + \
+          Read Bytes: {} + \
+		  Write Bytes: {} + \
+          Utilization: {} + \
+          Node count: {} + \
+		  ISCSI Sessions: {} + \
+		  Volume count: {} + \
+          Name: {} + \
+          Ensemble {}".format(mvip_ip,
+                              cluster_version,
+                              disk_use,
+                              cluster_read_bytes,
+                              cluster_write_bytes,
+                              cluster_util,
+                              num_nodes,
+                              num_sessions,
+                              num_vols,
+                              ensemble_string
+                              )
+         )
 
 if sys.stdout.isatty():
     print("+" + "-"*83 + "+")
