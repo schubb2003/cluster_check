@@ -24,7 +24,7 @@ import ipaddress
 import argparse
 from solidfire.factory import ElementFactory
 
-version="1.6 2018-Feb-2"
+version="1.8 2018-Aug-14"
 
 #This is a nagios thing, nagionic you might say. 
 STATE_OK=0
@@ -163,6 +163,7 @@ if cluster_info.cluster_info.rep_count == 2:
 else:
     sys.exit("unknown helix type, script has exited")
 
+    # Gather info for later output
 cluster_version_info = sfe.get_cluster_version_info()
 element_api_ver = cluster_version_info.cluster_apiversion
 element_os_ver = cluster_version_info.cluster_version
@@ -176,6 +177,7 @@ for node in cluster_state.nodes:
         num_meta_drives = 0
         error_data_drives = 0
         error_meta_drives = 0
+        # Gather drive info
         for drive in drive_list.drives:
             if drive.node_id == node.node_id and drive.type == "block" and drive.status == "active":
                 num_data_drives +=1
@@ -191,6 +193,7 @@ for node in cluster_state.nodes:
             cluster_state = node.result.state
             cluster_name = node.result.cluster
             ensemble_count += 1
+            # Write output to table
             if sys.stdout.isatty():
                 print("+" + "-"*83 + "+")
                 print("| SolidFire Monitoring Plugin v." + version + " Node information |".rjust(39))
@@ -210,7 +213,8 @@ for node in cluster_state.nodes:
 
             else:
                 print ("Node Status: " + cluster_state + " Cluster Name: " + cluster_name + " MVIP: " + mvip_ip)
-
+        
+        # If a node isn't part of the cluster generate specific output
         except AttributeError:
             error_msg = "Node is not part of the cluster"
             error_na = "N/A"
@@ -230,27 +234,32 @@ for node in cluster_state.nodes:
             pretty_print("Execution Time ", time.asctime(time.localtime(time.time())) , 80)
             print("+" + "-"*83 + "+")      
 
+# Gather iSCSI session info
 iscsi_sessions = sfe.list_iscsisessions()
 for session in iscsi_sessions.sessions:
     num_sessions +=1
 
+# Gather cluster metrics
 cluster_stats = sfe.get_cluster_stats()
-read_bytes = cluster_stats.cluster_stats.read_bytes
+read_bytes = (cluster_stats.cluster_stats.read_bytes)
+read_Gibytes = round((read_bytes/1024/1024/1024),2)
 read_ops = cluster_stats.cluster_stats.read_ops
 read_latent = cluster_stats.cluster_stats.read_latency_usec
-write_bytes = cluster_stats.cluster_stats.write_bytes
+write_bytes = (cluster_stats.cluster_stats.write_bytes)
+write_Gibytes = round((write_bytes/1024/1024/1024),2)
 write_ops = cluster_stats.cluster_stats.write_ops
 write_latent = cluster_stats.cluster_stats.write_latency_usec
 cluster_util = cluster_stats.cluster_stats.cluster_utilization
-total_bytes = read_bytes + write_bytes
+total_Gibytes = (read_Gibytes + write_Gibytes)
 total_ops = read_ops + write_ops
 average_iop_size = cluster_stats.cluster_stats.average_iopsize
-pct_read_bytes = round((read_bytes/total_bytes)*100,2)
-pct_write_bytes =  round((write_bytes/total_bytes)*100,2)
+pct_read_bytes = round((read_Gibytes/total_Gibytes)*100,2)
+pct_write_bytes =  round((write_Gibytes/total_Gibytes)*100,2)
 pct_read_ops =  round((read_ops/total_ops)*100,2)
 pct_write_ops =  round((write_ops/total_ops)*100,2)
 cluster_latent = cluster_stats.cluster_stats.latency_usec
 
+# Get volume count
 vol_list = sfe.list_volumes()
 for vol in vol_list.volumes:
 	num_vols += 1 
@@ -334,9 +343,9 @@ if sys.stdout.isatty():
     print("| SolidFire Monitoring Plugin v." + version + " IO information |".rjust(39))
     print("+" + "-"*83 + "+")    
     pretty_print("Disk Activity", disk_use, 80)
-    pretty_print("Read Bytes", str(read_bytes), 80)
-    pretty_print("Total Bytes", str(total_bytes), 80)
-    pretty_print("Write Bytes", str(write_bytes), 80)
+    pretty_print("Read GiBytes", str(read_Gibytes), 80)
+    pretty_print("Total GiBytes", str(total_Gibytes), 80)
+    pretty_print("Write GiBytes", str(write_Gibytes), 80)
     pretty_print("Percent Read Bytes", str(pct_read_bytes), 80)
     pretty_print("Percent Write Bytes", str(pct_write_bytes), 80)
     pretty_print("Read Ops", str(read_ops), 80)
